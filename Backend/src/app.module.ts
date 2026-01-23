@@ -9,8 +9,14 @@ import { DatabaseModule } from './database/database.module';
 import { StellarMonitorModule } from './stellar-monitor/stellar-monitor.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { QueueModule } from './queue/queue.module';
+import { AuthModule } from './auth/auth.module';
 import { Workflow } from './workflow/entities/workflow.entity';
 import { WorkflowStep } from './workflow/entities/workflow-step.entity';
+import { User } from './auth/entities/user.entity';
+import { WalletBinding } from './auth/entities/wallet-binding.entity';
+import { LoginNonce } from './auth/entities/login-nonce.entity';
+import { RefreshToken } from './auth/entities/refresh-token.entity';
+import { ApiToken } from './auth/entities/api-token.entity';
 
 @Module({
   imports: [
@@ -26,7 +32,15 @@ import { WorkflowStep } from './workflow/entities/workflow-step.entity';
         username: configService.get('DB_USERNAME') || 'postgres',
         password: configService.get('DB_PASSWORD') || 'password',
         database: configService.get('DB_DATABASE') || 'stellara_workflows',
-        entities: [Workflow, WorkflowStep],
+        entities: [
+          Workflow,
+          WorkflowStep,
+          User,
+          WalletBinding,
+          LoginNonce,
+          RefreshToken,
+          ApiToken,
+        ],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
       }),
@@ -34,6 +48,7 @@ import { WorkflowStep } from './workflow/entities/workflow-step.entity';
     }),
     DatabaseModule,
     RedisModule,
+    AuthModule,
     VoiceModule,
     StellarMonitorModule,
     WorkflowModule,
