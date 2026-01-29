@@ -1,5 +1,5 @@
 [package]
-name = "academy-vesting"
+name = "token"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,10 +7,14 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-soroban-sdk = { version = "=20.5.0", default-features = false }
+soroban-sdk = "=20.5.0"
 
 [dev-dependencies]
-soroban-sdk = { version = "=20.5.0", features = ["testutils"], default-features = false }
+soroban-sdk = { version = "=20.5.0", features = ["testutils"] }
+
+[features]
+default = ["testutils"]
+testutils = ["soroban-sdk/testutils"]
 
 [profile.release]
 opt-level = "z"

@@ -13,6 +13,7 @@ import { StellarMonitorModule } from './stellar-monitor/stellar-monitor.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { QueueModule } from './queue/queue.module';
 import { AuthModule } from './auth/auth.module';
+import { MarketDataModule } from './market-data/market-data.module';
 
 import { RolesGuard } from './guards/roles.guard';
 
@@ -66,7 +67,7 @@ import { AuditLog } from './audit/audit.entity';
     StellarMonitorModule,
     WorkflowModule,
     QueueModule,
-    AuditModule,
+    MarketDataModule,
   ],
 
   controllers: [AppController],
