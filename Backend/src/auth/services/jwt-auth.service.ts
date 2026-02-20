@@ -84,9 +84,8 @@ export class JwtAuthService {
 
   async generateRefreshToken(userId: string): Promise<{ token: string; id: string; expiresAt: Date }> {
     const token = uuidv4();
-    const expirationDays = 7;
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + expirationDays);
+    const configured = this.configService.get('JWT_REFRESH_EXPIRATION', '7d');
+    const expiresAt = this.parseExpirationToDate(configured);
 
     const refreshToken = this.refreshTokenRepository.create({
       token,
@@ -130,8 +129,15 @@ export class JwtAuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
+    // Detect reuse of revoked token: this likely indicates compromise.
     if (tokenRecord.revoked) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      // Revoke all refresh tokens for this user to invalidate sessions
+      if (tokenRecord.userId) {
+        await this.revokeAllUserRefreshTokens(tokenRecord.userId);
+        await this.auditService.logAction('REFRESH_TOKEN_REUSE_DETECTED', tokenRecord.userId, tokenRecord.id, { message: 'Revoked all user refresh tokens due to reuse of revoked token' });
+      }
+
+      throw new UnauthorizedException('Refresh token has been revoked (possible reuse)');
     }
 
     if (new Date() > tokenRecord.expiresAt) {
@@ -159,17 +165,17 @@ export class JwtAuthService {
   }
 
   async revokeRefreshToken(tokenId: string): Promise<void> {
+    const token = await this.refreshTokenRepository.findOne({ where: { id: tokenId } });
+
     await this.refreshTokenRepository.update(
       { id: tokenId },
       {
         revoked: true,
         revokedAt: new Date(),
       },
-
     );
 
-    await this.auditService.logAction('REFRESH_TOKEN_REVOKED', tokenId, tokenId
-);
+    await this.auditService.logAction('REFRESH_TOKEN_REVOKED', token?.userId || tokenId, tokenId, { revokedAt: new Date() });
 
   }
 
@@ -181,6 +187,7 @@ export class JwtAuthService {
         revokedAt: new Date(),
       },
     );
+    await this.auditService.logAction('REFRESH_TOKENS_REVOKED_FOR_USER', userId, userId, { revokedAt: new Date() });
   }
 
   async getUserFromToken(token: string): Promise<User> {
